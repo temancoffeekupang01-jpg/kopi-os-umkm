@@ -1,233 +1,166 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import time
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-# Konfigurasi Halaman
-st.set_page_config(page_title="Coffee Shop Management OS", layout="wide", initial_sidebar_state="expanded")
+# 1. KONFIGURASI HALAMAN & TEMA
+st.set_page_config(page_title="TITIK KOMA COFFEE - OS", layout="wide")
 
-# --- DATABASE SIMULASI (SESSION STATE) ---
-if 'authenticated' not in st.session_state:
-    st.session_state.authenticated = False
-    st.session_state.role = None
-if 'inventory' not in st.session_state:
-    st.session_state.inventory = [
-        {"Bahan": "Bijih Kopi Houseblend", "Stok": 15.0, "Satuan": "kg"},
-        {"Bahan": "Susu Fresh Milk", "Stok": 24.0, "Satuan": "Liter"},
-        {"Bahan": "Sirup Karamel", "Stok": 5.0, "Satuan": "Botol"}
-    ]
-if 'menu' not in st.session_state:
-    st.session_state.menu = [
-        {"Produk": "Es Kopi Susu Gula Aren", "Harga": 22000, "Modal": 8000},
-        {"Produk": "Caramel Latte", "Harga": 28000, "Modal": 11000},
-        {"Produk": "Manual Brew V60", "Harga": 25000, "Modal": 6000}
-    ]
+# Gaya CSS Custom untuk mempercantik tampilan seperti aplikasi profesional
+st.markdown("""
+    <style>
+    .card-penjualan { background-color: #00c853; color: white; padding: 20px; border-radius: 10px; }
+    .card-profit { background-color: #00b0ff; color: white; padding: 20px; border-radius: 10px; }
+    .card-pengeluaran { background-color: #ff9100; color: white; padding: 20px; border-radius: 10px; }
+    .stButton>button { border-radius: 8px; font-weight: bold; }
+    </style>
+""", unsafe_allowed_html=True)
+
+# 2. DATABASE SIMULASI (SESSION STATE)
 if 'transactions' not in st.session_state:
-    st.session_state.transactions = []
+    st.session_state.transactions = [
+        {"Waktu": "14:54", "Produk": "Butterscout, Renjana", "Qty": 2, "Total": 24000, "Modal": 10000, "Tipe": "Tunai"},
+        {"Waktu": "14:35", "Produk": "Renjana, Kahwa, Sakala", "Qty": 3, "Total": 102000, "Modal": 40000, "Tipe": "Tunai"},
+        {"Waktu": "12:46", "Produk": "Americano", "Qty": 1, "Total": 8000, "Modal": 3000, "Tipe": "QRIS"}
+    ]
 
-# --- SISTEM LOGIN BERBASIS PERAN ---
-if not st.session_state.authenticated:
-    st.title("🔐 Coffee OS - Login System")
-    st.write("Silakan masuk menggunakan kredensial akun Anda.")
+if 'menu_kopi' not in st.session_state:
+    st.session_state.menu_kopi = [
+        {"Produk": "Americano", "Harga": 8000, "Modal": 3000, "Stok": 1, "Kategori": "COFFEE", "Foto": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400"},
+        {"Produk": "Renjana", "Harga": 11000, "Modal": 4000, "Stok": 7, "Kategori": "SIGNATURE", "Foto": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400"},
+        {"Produk": "Kahwa", "Harga": 10000, "Modal": 3500, "Stok": 2, "Kategori": "SIGNATURE", "Foto": "https://images.unsplash.com/photo-1541167760496-1628856ab772?w=400"},
+        {"Produk": "Caramel Latte", "Harga": 13000, "Modal": 5000, "Stok": 1, "Kategori": "PREMIUM", "Foto": "https://images.unsplash.com/photo-1534778101976-62847782c213?w=400"}
+    ]
+
+# 3. SIDEBAR NAVIGASI
+st.sidebar.title("🏪 TITIK KOMA COFFEE")
+st.sidebar.write("📍 Jl. Sesawi No. 22")
+menu = st.sidebar.radio("AKSES CEPAT", ["🏠 Halaman Utama (Dashboard)", "🛒 Kasir (POS)", "📦 Produk & Stok", "📊 Laporan Detail"])
+
+# ==========================================
+# MENU 1: HALAMAN UTAMA (DASHBOARD)
+# ==========================================
+if menu == "🏠 Halaman Utama (Dashboard)":
+    st.title("Jumat, 26 Juni 2026")
+    st.subheader("TITIK KOMA COFFEE")
     
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
-    role = st.selectbox("Pilih Peran", ["Pemilik (Owner)", "Barista"])
+    # Hitung Statistik harian
+    df_tx = pd.DataFrame(st.session_state.transactions)
+    total_penjualan = df_tx["Total"].sum() if not df_tx.empty else 0
+    total_modal = df_tx["Modal"].sum() if not df_tx.empty else 0
+    profit = total_penjualan - total_modal
     
-    if st.button("Login", use_container_width=True):
-        if username == "admin" and password == "admin123":
-            st.session_state.authenticated = True
-            st.session_state.role = role
-            st.success(f"Selamat datang, {role}!")
+    # Baris Kartu Ringkasan (Mewah)
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown(f"<div class='card-penjualan'><h5>Penjualan Hari Ini</h5><h2>Rp {total_penjualan:,}</h2><p>{len(df_tx)} Transaksi</p></div>", unsafe_allowed_html=True)
+    with col2:
+        st.markdown(f"<div class='card-profit'><h5>Profit Hari Ini</h5><h2>Rp {profit:,}</h2><p>Bersih</p></div>", unsafe_allowed_html=True)
+    with col3:
+        st.markdown("<div class='card-pengeluaran'><h5>Pengeluaran Hari Ini</h5><h2>Rp 0</h2><p>0 Catatan</p></div>", unsafe_allowed_html=True)
+        
+    st.write("---")
+    
+    # Live Notifikasi Stok Menipis (Seperti di Video)
+    st.subheader("⚠️ Stok Menipis")
+    for item in st.session_state.menu_kopi:
+        if item["Stok"] <= 2:
+            st.error(f"🔴 **{item['Produk']}** — Sisa {item['Stok']} cup")
+
+    st.write("---")
+    st.subheader("🧾 Transaksi Terakhir")
+    if not df_tx.empty:
+        st.dataframe(df_tx[["Waktu", "Produk", "Total", "Tipe"]], use_container_width=True)
+
+# ==========================================
+# MENU 2: KASIR (POS DENGAN FOTO)
+# ==========================================
+elif menu == "🛒 Kasir (POS)":
+    st.title("🛒 Sistem Kasir Digital")
+    
+    # Tampilan Grid Menu Berjejer dengan Foto Produk
+    st.subheader("Menu Kasir")
+    
+    # Bagi layout menjadi kolom untuk menampilkan produk berbentuk Grid
+    cols = st.columns(4)
+    for index, item in enumerate(st.session_state.menu_kopi):
+        with cols[index % 4]:
+            st.image(item["Foto"], use_container_width=True)
+            st.write(f"**{item['Produk']}**")
+            st.caption(f"Harga: Rp {item['Harga']:,} | Stok: {item['Stok']}")
+            
+            if st.button(f"Tambah {item['Produk']}", key=f"btn_{index}"):
+                if item["Stok"] > 0:
+                    item["Stok"] -= 1
+                    st.session_state.transactions.append({
+                        "Waktu": datetime.now().strftime("%H:%M"),
+                        "Produk": item["Produk"],
+                        "Qty": 1,
+                        "Total": item["Harga"],
+                        "Modal": item["Modal"],
+                        "Tipe": "Tunai"
+                    })
+                    st.success(f"{item['Produk']} ditambahkan ke keranjang!")
+                    st.rerun()
+                else:
+                    st.error("Stok Habis!")
+
+# ==========================================
+# MENU 3: PRODUK & STOK
+# ==========================================
+elif menu == "📦 Produk & Stok":
+    st.title("📦 Master Data & Stok Produk")
+    df_prod = pd.DataFrame(st.session_state.menu_kopi)
+    st.dataframe(df_prod[["Produk", "Kategori", "Harga", "Modal", "Stok"]], use_container_width=True)
+    
+    st.write("---")
+    st.subheader("Tambah Produk / Tambah Stok Baru")
+    with st.form("form_produk"):
+        nama = st.text_input("Nama Produk Kopi")
+        kat = st.selectbox("Kategori", ["COFFEE", "SIGNATURE COFFEE", "PREMIUM COFFEE", "NON-COFFEE"])
+        harga_jual = st.number_input("Harga Jual (Rp)", min_value=0, step=1000)
+        harga_modal = st.number_input("Harga Modal/HPP (Rp)", min_value=0, step=1000)
+        jumlah_stok = st.number_input("Jumlah Stok Awal", min_value=0, step=1)
+        
+        if st.form_submit_button("Simpan Produk"):
+            st.session_state.menu_kopi.append({
+                "Produk": nama, "Harga": harga_jual, "Modal": harga_modal, 
+                "Stok": jumlah_stok, "Kategori": kat, 
+                "Foto": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400"
+            })
+            st.success("Produk baru berhasil didaftarkan!")
             st.rerun()
-        else:
-            st.error("Username atau password salah!")
-    st.stop()
-
-# --- SIDEBAR LOGOUT & INFO ---
-st.sidebar.title("☕ EspressoOS v1.0")
-st.sidebar.write(f"Peran Anda: **{st.session_state.role}**")
-if st.sidebar.button("Log Out", use_container_width=True):
-    st.session_state.authenticated = False
-    st.session_state.role = None
-    st.rerun()
-
-# --- MENU UTAMA BERDASARKAN PERAN ---
-if st.session_state.role == "Pemilik (Owner)":
-    menu_options = ["📊 Dashboard & Laporan Analitik", "📦 Inventory & Stock Control", "🧾 Sistem Kasir (POS)", "🔥 Roasting Monitor", "⏳ Smart Brew Guide"]
-else: # Barista
-    menu_options = ["🧾 Sistem Kasir (POS)", "⏳ Smart Brew Guide", "🔥 Roasting Monitor", "📦 Inventory & Stock Control"]
-
-choice = st.sidebar.radio("Navigasi Menu", menu_options)
 
 # ==========================================
-# 1. DASHBOARD & LAPORAN ANALITIK (Owner Only)
+# MENU 4: LAPORAN DETAIL
 # ==========================================
-if choice == "📊 Dashboard & Laporan Analitik":
-    st.title("📊 Dashboard & Laporan Analitik Real-Time")
+elif menu == "📊 Laporan Detail":
+    st.title("📊 Laporan Penjualan & Closing")
+    
+    tab1, tab2 = st.tabs(["Harian", "Analisis Grafik"])
     
     df_tx = pd.DataFrame(st.session_state.transactions)
-    total_sales = df_tx["Total"].sum() if not df_tx.empty else 0
-    total_qty = df_tx["Qty"].sum() if not df_tx.empty else 0
-    total_profit = (df_tx["Total"] - df_tx["Total Modal"]).sum() if not df_tx.empty else 0
-    
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total Pendapatan", f"Rp {total_sales:,}")
-    col2.metric("Total Produk Terjual", f"{total_qty} Cups")
-    col3.metric("Estimasi Keuntungan Bersih", f"Rp {total_profit:,}")
-    
-    st.subheader("📝 Histori Transaksi Penjualan")
-    if not df_tx.empty:
-        st.dataframe(df_tx, use_container_width=True)
-        
-        csv = df_tx.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📥 Ekspor Laporan ke CSV",
-            data=csv,
-            file_name=f"Laporan_Penjualan_{datetime.now().strftime('%Y%m%d')}.csv",
-            mime='text/csv',
-        )
-    else:
-        st.info("Belum ada data transaksi masuk hari ini.")
-
-# ==========================================
-# 2. INVENTORY & STOCK CONTROL
-# ==========================================
-elif choice == "📦 Inventory & Stock Control":
-    st.title("📦 Manajemen Inventaris & Resep Modal")
-    
-    tab1, tab2 = st.tabs(["Stok Bahan Baku", "Manajemen Harga & Modal Resep"])
     
     with tab1:
-        st.subheader("Persediaan Gudang")
-        df_inv = pd.DataFrame(st.session_state.inventory)
-        st.table(df_inv)
-        
-        if st.session_state.role == "Pemilik (Owner)":
-            st.write("---")
-            st.caption("Update/Tambah Stok Baru")
-            with st.form("tambah_stok"):
-                nama_bahan = st.text_input("Nama Bahan Baku")
-                jumlah = st.number_input("Jumlah", min_value=0.0, step=0.1)
-                satuan = st.text_input("Satuan (kg/Liter/Botol)")
-                if st.form_submit_button("Simpan Ke Gudang"):
-                    st.session_state.inventory.append({"Bahan": nama_bahan, "Stok": jumlah, "Satuan": satuan})
-                    st.success(f"{nama_bahan} berhasil diperbarui!")
-                    st.rerun()
-
+        st.date_input("Tanggal Laporan", datetime.now())
+        if st.button("🖨️ Cetak Laporan Closing", type="primary"):
+            st.success("Laporan berhasil dikirim ke printer kasir / diunduh!")
+            
+        st.write("---")
+        if not df_tx.empty:
+            st.dataframe(df_tx, use_container_width=True)
+        else:
+            st.info("Belum ada transaksi.")
+            
     with tab2:
-        st.subheader("Harga Jual vs Estimasi Modal Produk")
-        df_menu = pd.DataFrame(st.session_state.menu)
-        st.dataframe(df_menu, use_container_width=True)
+        if not df_tx.empty:
+            st.subheader("Grafik Omzet Hari Ini")
+            fig, ax = plt.subplots(figsize=(6, 2.5))
+            ax.bar(df_tx["Waktu"], df_tx["Total"], color="#00b0ff")
+            ax.set_ylabel("Rupiah (Rp)")
+            ax.set_xlabel("Jam Transaksi")
+            st.pyplot(fig)
+        else:
+            st.info("Data belum cukup untuk membuat grafik.")
 
-# ==========================================
-# 3. SISTEM KASIR (POS)
-# ==========================================
-elif choice == "🧾 Sistem Kasir (POS)":
-    st.title("🧾 Sistem Kasir Penjualan (POS)")
-    
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        st.subheader("Pilih Menu Pesanan")
-        selected_product = st.selectbox("Nama Menu", [p["Produk"] for p in st.session_state.menu])
-        qty = st.number_input("Jumlah (Qty)", min_value=1, step=1)
-        
-        prod_detail = next(p for p in st.session_state.menu if p["Produk"] == selected_product)
-        total_harga = prod_detail["Harga"] * qty
-        total_modal = prod_detail["Modal"] * qty
-        
-        st.write(f"Harga Satuan: **Rp {prod_detail['Harga']:,}**")
-        st.markdown(f"### Subtotal: **Rp {total_harga:,}**")
-        
-    with col2:
-        st.subheader("Pembayaran")
-        bayar = st.number_input("Nominal Uang Tunai (Rp)", min_value=0, step=1000)
-        kembalian = bayar - total_harga
-        
-        if bayar > 0:
-            if kembalian >= 0:
-                st.success(f"Kembalian: **Rp {kembalian:,}**")
-            else:
-                st.error(f"Uang kurang: **Rp {abs(kembalian):,}**")
-                
-        if st.button("PROSES TRANSAKSI & CETAK", use_container_width=True, type="primary"):
-            if bayar >= total_harga:
-                st.session_state.transactions.append({
-                    "Waktu": datetime.now().strftime("%H:%M:%S"),
-                    "Produk": selected_product,
-                    "Qty": qty,
-                    "Total": total_harga,
-                    "Total Modal": total_modal
-                })
-                st.balloons()
-                st.success("Transaksi Sukses Tercatat!")
-                time.sleep(1)
-                st.rerun()
-            else:
-                st.error("Gagal! Uang pembayaran belum mencukupi.")
-
-# ==========================================
-# 4. ROASTING MONITOR (With Live Charts)
-# ==========================================
-elif choice == "🔥 Roasting Monitor":
-    st.title("🔥 Roasting Profile Monitor & Logger")
-    st.write("Pantau pergerakan grafik suhu mesin Roasting secara Real-Time.")
-    
-    col_btn1, col_btn2 = st.columns(2)
-    start_roast = col_btn1.button("🟢 Mulai Proses Roasting", use_container_width=True)
-    
-    chart_placeholder = st.empty()
-    log_placeholder = st.empty()
-    
-    if start_roast:
-        suhu_logs = []
-        waktu_logs = []
-        
-        for t in range(0, 61, 5):
-            waktu_logs.append(t)
-            temp = 100 + (100 / (1 + np.exp(-(t-30)/10))) + np.random.normal(0, 2)
-            suhu_logs.append(temp)
-            
-            fig, ax = plt.subplots(figsize=(10, 4))
-            ax.plot(waktu_logs, suhu_logs, marker='o', color='#ff4b4b', label='Suhu Bean (°C)')
-            ax.set_title("Kurva Suhu Roasting Real-Time")
-            ax.set_xlabel("Waktu (Detik)")
-            ax.set_ylabel("Suhu (°C)")
-            ax.grid(True, linestyle='--')
-            ax.legend()
-            
-            chart_placeholder.pyplot(fig)
-            plt.close(fig)
-            
-            log_placeholder.caption(f"Detik ke-{t}: Suhu saat ini **{temp:.1f}°C**")
-            time.sleep(0.4)
-        st.success("🔥 Proses Roasting Selesai! Data Log Profil Berhasil Dikunci.")
-
-# ==========================================
-# 5. SMART BREW GUIDE (Timer Modul Barista)
-# ==========================================
-elif choice == "⏳ Smart Brew Guide":
-    st.title("⏳ Smart Brew Guide & Pouring Timer")
-    st.write("Panduan menyeduh kopi filter konvensional (V60 / Kalita Wave) langkah demi langkah.")
-    
-    metode = st.selectbox("Pilih Profil Seduh", ["V60 Fruity Sweet (1:15)", "V60 Bold Body (1:12)"])
-    st.info("💡 **Instruksi**: Siapkan server, basahi paper filter, masukkan 15g bubuk kopi. Klik tombol di bawah.")
-    
-    if st.button("🚀 MULAI TIMER MENYEDUH", use_container_width=True):
-        progress_bar = st.progress(0)
-        
-        st.subheader("🌊 Tahap 1: Blooming (30 Detik)")
-        for i in range(1, 31):
-            progress_bar.progress(int((i/90)*100))
-            time.sleep(0.1)
-            
-        st.subheader("☕ Tahap 2: Tuangan Kedua & Akhir (60 Detik)")
-        for i in range(31, 91):
-            progress_bar.progress(int((i/90)*100))
-            time.sleep(0.1)
-            
-        st.balloons()
-        st.success("🏁 Proses Seduh Selesai! Kopi Siap Disajikan Ke Pelanggan.")
