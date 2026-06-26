@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-# 1. KONFIGURASI HALAMAN & TEMA
+# 1. KONFIGURASI HALAMAN
 st.set_page_config(page_title="TITIK KOMA COFFEE - OS", layout="wide")
 
 # 2. DATABASE SIMULASI (SESSION STATE)
@@ -41,18 +41,18 @@ if menu == "🏠 Halaman Utama (Dashboard)":
     total_modal = df_tx["Modal"].sum() if not df_tx.empty else 0
     profit = total_penjualan - total_modal
     
-    # Baris Kartu Ringkasan (Mewah)
+    # Tampilan Kartu Ringkasan Menggunakan Fitur Asli Streamlit (Anti-Error)
     col1, col2, col3 = st.columns(3)
-with col1:
-    st.metric(label="💰 Penjualan Hari Ini", value=f"Rp {total_penjualan:,}", delta=f"{len(df_tx)} Transaksi")
-with col2:
-    st.metric(label="📈 Profit Hari Ini", value=f"Rp {profit:,}", delta="Bersih", delta_color="normal")
-with col3:
-    st.metric(label="📉 Pengeluaran Hari Ini", value="Rp 0", delta="0 Catatan", delta_color="inverse")
+    with col1:
+        st.metric(label="💰 Penjualan Hari Ini", value=f"Rp {total_penjualan:,}", delta=f"{len(df_tx)} Transaksi")
+    with col2:
+        st.metric(label="📈 Profit Hari Ini", value=f"Rp {profit:,}", delta="Bersih", delta_color="normal")
+    with col3:
+        st.metric(label="📉 Pengeluaran Hari Ini", value="Rp 0", delta="0 Catatan", delta_color="inverse")
         
     st.write("---")
     
-    # Live Notifikasi Stok Menipis (Seperti di Video)
+    # Live Notifikasi Stok Menipis
     st.subheader("⚠️ Stok Menipis")
     for item in st.session_state.menu_kopi:
         if item["Stok"] <= 2:
@@ -68,11 +68,8 @@ with col3:
 # ==========================================
 elif menu == "🛒 Kasir (POS)":
     st.title("🛒 Sistem Kasir Digital")
-    
-    # Tampilan Grid Menu Berjejer dengan Foto Produk
     st.subheader("Menu Kasir")
     
-    # Bagi layout menjadi kolom untuk menampilkan produk berbentuk Grid
     cols = st.columns(4)
     for index, item in enumerate(st.session_state.menu_kopi):
         with cols[index % 4]:
@@ -91,7 +88,7 @@ elif menu == "🛒 Kasir (POS)":
                         "Modal": item["Modal"],
                         "Tipe": "Tunai"
                     })
-                    st.success(f"{item['Produk']} ditambahkan ke keranjang!")
+                    st.success(f"{item['Produk']} ditambahkan!")
                     st.rerun()
                 else:
                     st.error("Stok Habis!")
@@ -127,15 +124,13 @@ elif menu == "📦 Produk & Stok":
 # ==========================================
 elif menu == "📊 Laporan Detail":
     st.title("📊 Laporan Penjualan & Closing")
-    
     tab1, tab2 = st.tabs(["Harian", "Analisis Grafik"])
-    
     df_tx = pd.DataFrame(st.session_state.transactions)
     
     with tab1:
         st.date_input("Tanggal Laporan", datetime.now())
         if st.button("🖨️ Cetak Laporan Closing", type="primary"):
-            st.success("Laporan berhasil dikirim ke printer kasir / diunduh!")
+            st.success("Laporan closing dicetak!")
             
         st.write("---")
         if not df_tx.empty:
