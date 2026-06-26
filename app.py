@@ -8,7 +8,7 @@ from datetime import datetime
 st.set_page_config(page_title="TITIK KOMA COFFEE - OS", layout="wide")
 
 # Gaya CSS Custom untuk mempercantik tampilan seperti aplikasi profesional
-st.markdown("""
+st.markdown(body="""
     <style>
     .card-penjualan { background-color: #00c853; color: white; padding: 20px; border-radius: 10px; }
     .card-profit { background-color: #00b0ff; color: white; padding: 20px; border-radius: 10px; }
@@ -16,6 +16,7 @@ st.markdown("""
     .stButton>button { border-radius: 8px; font-weight: bold; }
     </style>
 """, unsafe_allowed_html=True)
+
 
 # 2. DATABASE SIMULASI (SESSION STATE)
 if 'transactions' not in st.session_state:
