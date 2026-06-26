@@ -7,17 +7,6 @@ from datetime import datetime
 # 1. KONFIGURASI HALAMAN & TEMA
 st.set_page_config(page_title="TITIK KOMA COFFEE - OS", layout="wide")
 
-# Gaya CSS Custom untuk mempercantik tampilan seperti aplikasi profesional
-st.markdown(body="""
-    <style>
-    .card-penjualan { background-color: #00c853; color: white; padding: 20px; border-radius: 10px; }
-    .card-profit { background-color: #00b0ff; color: white; padding: 20px; border-radius: 10px; }
-    .card-pengeluaran { background-color: #ff9100; color: white; padding: 20px; border-radius: 10px; }
-    .stButton>button { border-radius: 8px; font-weight: bold; }
-    </style>
-""", unsafe_allowed_html=True)
-
-
 # 2. DATABASE SIMULASI (SESSION STATE)
 if 'transactions' not in st.session_state:
     st.session_state.transactions = [
@@ -54,12 +43,12 @@ if menu == "🏠 Halaman Utama (Dashboard)":
     
     # Baris Kartu Ringkasan (Mewah)
     col1, col2, col3 = st.columns(3)
-    with col1:
-        st.markdown(f"<div class='card-penjualan'><h5>Penjualan Hari Ini</h5><h2>Rp {total_penjualan:,}</h2><p>{len(df_tx)} Transaksi</p></div>", unsafe_allowed_html=True)
-    with col2:
-        st.markdown(f"<div class='card-profit'><h5>Profit Hari Ini</h5><h2>Rp {profit:,}</h2><p>Bersih</p></div>", unsafe_allowed_html=True)
-    with col3:
-        st.markdown("<div class='card-pengeluaran'><h5>Pengeluaran Hari Ini</h5><h2>Rp 0</h2><p>0 Catatan</p></div>", unsafe_allowed_html=True)
+with col1:
+    st.metric(label="💰 Penjualan Hari Ini", value=f"Rp {total_penjualan:,}", delta=f"{len(df_tx)} Transaksi")
+with col2:
+    st.metric(label="📈 Profit Hari Ini", value=f"Rp {profit:,}", delta="Bersih", delta_color="normal")
+with col3:
+    st.metric(label="📉 Pengeluaran Hari Ini", value="Rp 0", delta="0 Catatan", delta_color="inverse")
         
     st.write("---")
     
